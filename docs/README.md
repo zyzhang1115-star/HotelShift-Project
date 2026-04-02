@@ -45,10 +45,10 @@ git push origin main
 2. Click **Settings**
 3. Navigate to **Pages** (left sidebar)
 4. **Source:** Select `main` branch
-5. **Folder:** Select `msa-investment-app` folder ← **Important!**
+5. **Folder:** Select `docs` folder ← **Important!**
 6. Click **Save**
 
-GitHub will show your live URL: `https://yourusername.github.io/Capstone-Coding/msa-investment-app/`
+GitHub will show your live URL: `https://yourusername.github.io/Capstone-Coding/`
 
 ### Step 3: Access Your App
 Open the URL above in your browser! Your dashboard is live! 🎉
@@ -59,7 +59,7 @@ Open the URL above in your browser! Your dashboard is live! 🎉
 
 ### Using Python HTTP Server
 ```bash
-cd msa-investment-app
+cd docs
 python3 -m http.server 8000
 ```
 Then visit: `http://localhost:8000`

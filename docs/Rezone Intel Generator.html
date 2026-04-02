@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReZone Intel AI — Report Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb; --white:#ffffff; --border:#e4e8f0; --border2:#c8d0e0;
+  --text:#111827; --text2:#374151; --muted:#6b7280; --muted2:#9ca3af;
+  --green:#059669; --green-bg:#ecfdf5; --green-bd:#a7f3d0;
+  --blue:#2563eb; --blue-bg:#eff6ff; --blue-bd:#bfdbfe;
+  --orange:#d97706; --orange-bg:#fffbeb; --orange-bd:#fde68a;
+  --red:#dc2626; --red-bg:#fef2f2; --red-bd:#fecaca;
+  --purple:#7c3aed; --purple-bg:#f5f3ff; --purple-bd:#ddd6fe;
+  --cyan:#0891b2; --cyan-bg:#ecfeff; --cyan-bd:#a5f3fc;
+  --indigo:#4f46e5;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 4px 12px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+  --shadow-md:0 8px 24px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm)}
+.nav-inner{max-width:1340px;margin:0 auto;padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.logo{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:700;color:var(--text);letter-spacing:-.02em;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.logo span{color:var(--indigo)}
+.logo-ai{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--white);background:var(--indigo);padding:2px 7px;border-radius:4px}
+.nav-tabs{display:flex;gap:2px}
+.tab{padding:7px 15px;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;border-radius:8px;transition:all .18s}
+.tab:hover{color:var(--text);background:#f1f5f9}
+.tab.on{color:var(--indigo);background:#eff2ff}
+.tab.disabled{opacity:.4;pointer-events:none}
+.live{display:flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;color:var(--green);letter-spacing:.07em;text-transform:uppercase;background:var(--green-bg);border:1px solid var(--green-bd);padding:5px 12px;border-radius:999px;white-space:nowrap}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* VIEWS */
+.view{display:none}
+.view.on{display:block;animation:fadeUp .35s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* LAYOUT */
+.wrap{max-width:1340px;margin:0 auto;padding:3rem 2rem}
+.sp{height:2.5rem}
+.divider{height:1px;background:var(--border);margin:2rem 0}
+.eyebrow{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--indigo);margin-bottom:.4rem}
+.sh{font-family:'Fraunces',serif;font-size:1.85rem;font-weight:700;letter-spacing:-.02em;line-height:1.15;color:var(--text);margin-bottom:.4rem}
+.sub{color:var(--muted);font-size:.9rem;line-height:1.7;max-width:620px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:1.6rem;box-shadow:var(--shadow-sm);transition:box-shadow .2s,border-color .2s}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:900px){.g2{grid-template-columns:1fr}}
+
+/* CHIPS */
+.chip{display:inline-block;font-size:.6rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.cg{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.cb{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+.co{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-bd)}
+.cr{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.cp{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)}
+.ci{background:#eff2ff;color:var(--indigo);border:1px solid #c7d2fe}
+.cc{background:var(--cyan-bg);color:var(--cyan);border:1px solid var(--cyan-bd)}
+
+/* SETUP SCREEN */
+.setup-hero{background:linear-gradient(135deg,#1e3a8a 0%,#312e81 45%,#4338ca 100%);color:#fff;padding:5rem 2rem 4.5rem;text-align:center;position:relative;overflow:hidden}
+.setup-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.setup-hero-inner{position:relative;z-index:1;max-width:720px;margin:0 auto}
+.setup-badge{display:inline-flex;align-items:center;gap:7px;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:.35rem 1rem;border-radius:999px;margin-bottom:1.6rem}
+.setup-hero h1{font-family:'Fraunces',serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;line-height:1.08;letter-spacing:-.03em;color:#fff;margin-bottom:1rem}
+.setup-hero h1 em{color:#93c5fd;font-style:italic}
+.setup-hero p{font-size:.95rem;line-height:1.75;color:rgba(255,255,255,.7);max-width:520px;margin:0 auto}
+
+/* FORM */
+.setup-form-wrap{max-width:760px;margin:0 auto;padding:3rem 2rem}
+.form-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:2rem;box-shadow:var(--shadow-md)}
+.form-section{margin-bottom:1.8rem}
+.form-label{display:block;font-size:.8rem;font-weight:700;color:var(--text2);margin-bottom:.5rem;letter-spacing:.01em}
+.form-label span{font-weight:400;color:var(--muted);margin-left:4px}
+.form-input{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:10px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);background:var(--white);transition:border-color .2s,box-shadow .2s;outline:none}
+.form-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(79,70,229,.08)}
+.form-input::placeholder{color:var(--muted2)}
+textarea.form-input{resize:vertical;min-height:180px;line-height:1.7}
+.form-hint{font-size:.72rem;color:var(--muted);margin-top:.4rem;line-height:1.6}
+.form-hint a{color:var(--indigo);text-decoration:none}
+.form-hint a:hover{text-decoration:underline}
+.api-wrap{position:relative}
+.api-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.72rem;font-weight:600;color:var(--indigo);cursor:pointer;background:none;border:none;padding:4px 8px}
+.btn-generate{width:100%;padding:1rem 2rem;background:linear-gradient(135deg,var(--indigo),#7c3aed);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .2s;letter-spacing:.01em;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-generate:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(79,70,229,.3)}
+.btn-generate:active{transform:translateY(0)}
+.btn-generate:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.btn-secondary{padding:.65rem 1.4rem;background:var(--white);color:var(--text2);border:1.5px solid var(--border2);border-radius:8px;font-size:.82rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .18s}
+.btn-secondary:hover{border-color:var(--indigo);color:var(--indigo)}
+.warning-box{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:1rem 1.2rem;font-size:.78rem;color:#92400e;line-height:1.65}
+.warning-box strong{color:#78350f}
+.city-count{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--indigo);background:#eff2ff;border:1px solid #c7d2fe;padding:3px 10px;border-radius:999px;margin-top:.5rem}
+
+/* LOADING SCREEN */
+.loading-wrap{max-width:700px;margin:0 auto;padding:3rem 2rem}
+.loading-header{text-align:center;margin-bottom:2.5rem}
+.loading-header h2{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.4rem}
+.loading-header p{color:var(--muted);font-size:.88rem}
+.progress-bar-outer{height:6px;background:#e9ecf3;border-radius:3px;margin:1.5rem 0;overflow:hidden}
+.progress-bar-inner{height:100%;background:linear-gradient(90deg,var(--indigo),#7c3aed);border-radius:3px;transition:width .4s ease}
+.city-progress-list{display:flex;flex-direction:column;gap:.6rem}
+.cp-item{display:flex;align-items:center;gap:1rem;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.1rem;box-shadow:var(--shadow-sm);transition:border-color .3s}
+.cp-item.done{border-color:var(--green-bd);background:var(--green-bg)}
+.cp-item.active{border-color:#c7d2fe;background:#eff2ff}
+.cp-item.error{border-color:var(--red-bd);background:var(--red-bg)}
+.cp-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.cp-item.done .cp-icon{background:var(--green-bg)}
+.cp-item.active .cp-icon{background:#eff2ff;animation:spin 1.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cp-item.queued .cp-icon{background:#f8fafc;filter:grayscale(1);opacity:.5}
+.cp-item.error .cp-icon{background:var(--red-bg)}
+.cp-name{font-size:.88rem;font-weight:700;color:var(--text);flex:1}
+.cp-status{font-size:.7rem;font-weight:600;color:var(--muted)}
+.cp-item.done .cp-status{color:var(--green)}
+.cp-item.active .cp-status{color:var(--indigo)}
+.cp-item.error .cp-status{color:var(--red)}
+
+/* HERO (report) */
+.hero{background:linear-gradient(135deg,#1e3a8a 0%,#312e81 45%,#4338ca 100%);color:#fff;padding:5rem 2rem 4.5rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-inner{position:relative;z-index:1;max-width:780px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.9);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:.35rem 1rem;border-radius:999px;margin-bottom:1.6rem}
+.hero h1{font-family:'Fraunces',serif;font-size:clamp(2rem,4vw,3.5rem);font-weight:700;line-height:1.08;letter-spacing:-.03em;color:#fff;margin-bottom:1rem}
+.hero h1 em{color:#93c5fd;font-style:italic}
+.hero p{font-size:.95rem;line-height:1.75;color:rgba(255,255,255,.7);margin-bottom:3rem;max-width:540px;margin-left:auto;margin-right:auto}
+.kpi-strip{display:flex;flex-wrap:wrap;justify-content:center;max-width:960px;margin:0 auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:14px;overflow:hidden}
+.kpi{padding:1.3rem 2rem;flex:1;min-width:130px;text-align:center;border-right:1px solid rgba(255,255,255,.1)}
+.kpi:last-child{border-right:none}
+.kpi-n{font-family:'Fraunces',serif;font-size:1.9rem;font-weight:700;color:#fff;line-height:1;margin-bottom:.3rem}
+.kpi-l{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5)}
+
+/* OVERVIEW */
+.pipe-row{display:flex;align-items:center;gap:1rem;padding:.55rem 0}
+.pipe-row+.pipe-row{border-top:1px solid #f8fafc}
+.pipe-city{width:130px;font-size:.82rem;font-weight:600;flex-shrink:0;color:var(--text2)}
+.pipe-bg{flex:1;height:8px;background:#f1f5f9;border-radius:5px;overflow:hidden}
+.pipe-fill{height:100%;border-radius:5px;transition:width 1s ease}
+.pipe-val{width:70px;font-size:.76rem;font-weight:700;color:var(--text2);text-align:right;flex-shrink:0}
+table.t{width:100%;border-collapse:collapse;font-size:.82rem}
+table.t th{text-align:left;padding:.65rem 1rem;font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);background:#f8fafc;border-bottom:2px solid var(--border)}
+table.t td{padding:.75rem 1rem;border-bottom:1px solid #f1f5f9;color:var(--text2)}
+table.t tr:hover td{background:#fafbff}
+table.t tr:last-child td{border-bottom:none}
+.tg{color:var(--green);font-weight:700}.to{color:var(--orange);font-weight:700}.tr{color:var(--red);font-weight:700}
+
+/* CITY INTEL */
+.city-layout{display:grid;grid-template-columns:260px 1fr;gap:1.5rem;align-items:start}
+@media(max-width:960px){.city-layout{grid-template-columns:1fr}}
+.city-nav{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm);position:sticky;top:72px;max-height:calc(100vh - 100px);overflow-y:auto}
+.city-nav-head{padding:.8rem 1.2rem;background:#f8fafc;border-bottom:1px solid var(--border);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.cni{padding:.9rem 1.2rem;border-bottom:1px solid #f1f5f9;cursor:pointer;border-left:3px solid transparent;transition:all .18s;display:flex;justify-content:space-between;align-items:center}
+.cni:last-child{border-bottom:none}
+.cni:hover{background:#fafbff}
+.cni.on{background:#f0f2ff;border-left-color:var(--indigo)}
+.cni-rank{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted2);margin-bottom:2px}
+.cni-name{font-size:.86rem;font-weight:700;color:var(--text)}
+.cni.on .cni-name{color:var(--indigo)}
+.city-panel{display:flex;flex-direction:column;gap:1.25rem}
+.city-header{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:1.75rem;box-shadow:var(--shadow-sm)}
+.ch-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:.8rem}
+.ch-rank-tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--indigo);margin-bottom:4px}
+.ch-name{font-family:'Fraunces',serif;font-size:2rem;font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--text)}
+.ch-kpis{display:flex;gap:1.8rem}
+.ch-kpi{text-align:right}
+.ch-kpi-val{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:700;line-height:1}
+.ch-kpi-lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:2px}
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem}
+@media(max-width:760px){.stat-strip{grid-template-columns:repeat(2,1fr)}}
+.stat-tile{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;text-align:center}
+.stat-tile-val{font-family:'Fraunces',serif;font-size:1.45rem;font-weight:700;line-height:1;margin-bottom:.25rem}
+.stat-tile-lbl{font-size:.63rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.info-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:680px){.info-2{grid-template-columns:1fr}}
+.ibox{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:1.1rem}
+.ibox-lbl{display:flex;align-items:center;gap:7px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:.55rem}
+.ibox-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ibox-text{font-size:.82rem;line-height:1.7;color:var(--text2)}
+.proj-table{width:100%;border-collapse:collapse;font-size:.79rem}
+.proj-table th{text-align:left;padding:.55rem .9rem;font-size:.61rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);background:#f8fafc;border-bottom:2px solid var(--border)}
+.proj-table td{padding:.7rem .9rem;border-bottom:1px solid #f1f5f9;vertical-align:top;color:var(--text2)}
+.proj-table tr:hover td{background:#fafbff}
+.proj-table tr:last-child td{border-bottom:none}
+.proj-name{font-weight:700;color:var(--text);font-size:.81rem;margin-bottom:2px}
+.proj-addr{font-size:.7rem;color:var(--muted2)}
+.timeline{display:flex;flex-direction:column}
+.tl-item{display:flex;gap:1rem;padding:.85rem 0;border-bottom:1px solid #f1f5f9;align-items:flex-start}
+.tl-item:last-child{border-bottom:none}
+.tl-date{min-width:80px;font-size:.7rem;font-weight:700;color:var(--indigo);text-transform:uppercase;letter-spacing:.06em;padding-top:2px;flex-shrink:0}
+.tl-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--indigo);background:var(--white);flex-shrink:0;margin-top:4px}
+.tl-title{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.tl-desc{font-size:.77rem;line-height:1.6;color:var(--muted)}
+.fin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem}
+@media(max-width:760px){.fin-grid{grid-template-columns:1fr 1fr}}
+.fin-card{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:1rem;border-top:3px solid var(--indigo)}
+.fin-amount{font-family:'Fraunces',serif;font-size:1.35rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.fin-label{font-size:.72rem;font-weight:700;color:var(--text2);margin-bottom:.3rem}
+.fin-desc{font-size:.72rem;color:var(--muted);line-height:1.55}
+.news-list{display:flex;flex-direction:column;gap:.6rem}
+.news-item{display:flex;gap:.8rem;align-items:flex-start;background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:.85rem 1rem;transition:border-color .15s}
+.news-item:hover{border-color:var(--border2);background:var(--white)}
+.news-type{padding:3px 8px;border-radius:5px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.news-body{font-size:.8rem;line-height:1.58;color:var(--text2)}
+.news-src{font-size:.65rem;color:var(--muted2);margin-top:4px}
+.news-src::before{content:'↳ '}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem;flex-wrap:wrap;gap:.5rem}
+.card-title{font-size:.95rem;font-weight:700;color:var(--text)}
+.note-box{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.85rem 1rem;font-size:.75rem;color:#92400e;line-height:1.65;margin-top:1rem}
+
+/* ERROR */
+.error-box{background:var(--red-bg);border:1px solid var(--red-bd);border-radius:10px;padding:1rem 1.2rem;font-size:.82rem;color:var(--red);line-height:1.65}
+
+footer{background:var(--white);border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;font-size:.73rem;color:var(--muted)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <div class="logo">ReZone<span>Intel</span> <span class="logo-ai">AI</span></div>
+    <div class="nav-tabs">
+      <div class="tab on"      id="tab-setup"    onclick="goTab('setup')">Setup</div>
+      <div class="tab disabled" id="tab-overview" onclick="goTab('overview')">Overview</div>
+      <div class="tab disabled" id="tab-cities"  onclick="goTab('cities')">City Intelligence</div>
+    </div>
+    <div id="nav-live" style="display:none" class="live"><div class="live-dot"></div>AI Generated</div>
+  </div>
+</nav>
+
+
+<!-- ══════════════════════════ SETUP ══════════════════════════ -->
+<div id="view-setup" class="view on">
+  <div class="setup-hero">
+    <div class="setup-hero-inner">
+      <div class="setup-badge">✦ Powered by Gemini AI</div>
+      <h1>Generate Your <em>ReZone Intelligence</em><br>Report in Seconds</h1>
+      <p>Enter any 5–15 cities. Gemini AI will research each market and generate a full commercial-to-residential intelligence dashboard — catalysts, projects, policy timelines, financial mechanisms, and sourced news.</p>
+    </div>
+  </div>
+
+  <div class="setup-form-wrap">
+    <div class="form-card">
+
+      <div class="form-section">
+        <label class="form-label" for="apiKey">Gemini API Key <span>(stored only in your browser)</span></label>
+        <div class="api-wrap">
+          <input type="password" class="form-input" id="apiKey" placeholder="AIza••••••••••••••••••••••••••••••••••••">
+          <button class="api-toggle" onclick="toggleApiVis()">Show</button>
+        </div>
+        <p class="form-hint">Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a> → Create API Key. Uses <strong>gemini-2.5-flash</strong>.</p>
+      </div>
+
+      <div class="form-section">
+        <label class="form-label" for="reportTitle">Report Title <span>(optional)</span></label>
+        <input type="text" class="form-input" id="reportTitle" placeholder="e.g. Commercial-to-Residential Rezoning Intelligence 2026">
+      </div>
+
+      <div class="form-section">
+        <label class="form-label" for="reportFocus">Report Focus / Topic <span>(what angle should the report cover?)</span></label>
+        <input type="text" class="form-input" id="reportFocus" placeholder="e.g. commercial-to-residential rezoning potential, hotel conversion opportunities, industrial to residential...">
+      </div>
+
+      <div class="form-section">
+        <label class="form-label" for="cityInput">Cities to Analyze <span>(one per line, 5–15 cities)</span></label>
+        <textarea class="form-input" id="cityInput" placeholder="New York City, NY&#10;Los Angeles, CA&#10;Chicago, IL&#10;Houston, TX&#10;Phoenix, AZ&#10;Philadelphia, PA&#10;San Antonio, TX&#10;San Diego, CA&#10;Dallas, TX&#10;San Jose, CA" oninput="updateCityCount()"></textarea>
+        <div id="city-count-badge" class="city-count">0 cities</div>
+        <p class="form-hint">Include state abbreviation for best results. Example: <strong>Austin, TX</strong> · <strong>Miami, FL</strong> · <strong>Denver, CO</strong></p>
+      </div>
+
+      <div class="warning-box" style="margin-bottom:1.5rem">
+        <strong>⚠️ API Key Security:</strong> This tool calls Gemini directly from your browser. Your API key is never sent to any third-party server — only to Google's API. If you plan to make this page public, move the API call to a backend server to protect your key.
+      </div>
+
+      <div id="setup-error" class="error-box" style="display:none;margin-bottom:1rem"></div>
+
+      <button class="btn-generate" id="gen-btn" onclick="startGeneration()">
+        <span>✦</span> Generate Intelligence Report
+      </button>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div style="margin-top:2rem;padding:1.5rem;background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm)">
+      <div class="eyebrow">How It Works</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem">
+        <div style="text-align:center;padding:1rem">
+          <div style="font-size:1.6rem;margin-bottom:.5rem">1</div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.3rem">You Enter Cities</div>
+          <div style="font-size:.76rem;color:var(--muted);line-height:1.6">Type in any 5–15 US cities you want to analyze for rezoning potential.</div>
+        </div>
+        <div style="text-align:center;padding:1rem">
+          <div style="font-size:1.6rem;margin-bottom:.5rem">2</div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.3rem">Gemini Researches</div>
+          <div style="font-size:.76rem;color:var(--muted);line-height:1.6">Gemini AI generates detailed market intelligence for each city in structured JSON format.</div>
+        </div>
+        <div style="text-align:center;padding:1rem">
+          <div style="font-size:1.6rem;margin-bottom:.5rem">3</div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:.3rem">Report Renders</div>
+          <div style="font-size:.76rem;color:var(--muted);line-height:1.6">A full interactive dashboard is built — pipeline data, projects, policy timelines, and more.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════ LOADING ══════════════════════════ -->
+<div id="view-loading" class="view">
+  <div class="loading-wrap">
+    <div class="loading-header">
+      <div class="eyebrow">Generating Report</div>
+      <h2>Researching your markets...</h2>
+      <p>Gemini is analyzing each city. This typically takes 15–40 seconds.</p>
+    </div>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar" style="width:5%"></div></div>
+    <div id="progress-label" style="font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:1.5rem">Starting...</div>
+    <div class="city-progress-list" id="city-progress-list"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════ OVERVIEW ══════════════════════════ -->
+<div id="view-overview" class="view">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge"><div class="live-dot" style="background:#93c5fd"></div>AI-Generated Intelligence Report</div>
+      <h1 id="hero-title">Market <em>Intelligence</em></h1>
+      <p id="hero-desc">AI-generated commercial-to-residential rezoning analysis.</p>
+      <div class="kpi-strip" id="kpi-strip"></div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="g2">
+      <div class="card">
+        <div class="card-head">
+          <div><div class="eyebrow">Pipeline Volume</div><div class="card-title">Units in Active Conversion Pipeline</div></div>
+          <span class="chip ci">AI Data</span>
+        </div>
+        <div id="pipe-bars"></div>
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <div class="card-head">
+          <div><div class="eyebrow">Scorecard</div><div class="card-title">Market Overview Matrix</div></div>
+          <span class="chip ci">All Cities</span>
+        </div>
+        <table class="t" id="scorecard-table">
+          <thead><tr><th>City</th><th>Vacancy</th><th>Pipeline</th><th>YoY</th><th>Status</th></tr></thead>
+          <tbody id="scorecard-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="note-box">⚡ <strong>AI-Generated Report:</strong> This report was generated by Gemini AI based on available training data. Verify key figures against current primary sources before making investment decisions. Data may reflect conditions as of the AI's knowledge cutoff.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════ CITY INTEL ══════════════════════════ -->
+<div id="view-cities" class="view">
+  <div class="wrap">
+    <div class="eyebrow">AI-Generated Deep Dive</div>
+    <div class="sh">City Intelligence Reports</div>
+    <p class="sub" style="margin-bottom:2rem">Full AI-researched profiles — catalysts, active projects, policy timelines, financial mechanisms, and sourced intelligence.</p>
+    <div class="city-layout">
+      <div class="city-nav">
+        <div class="city-nav-head">Select City</div>
+        <div id="city-nav-list"></div>
+      </div>
+      <div class="city-panel" id="city-panel"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>ReZone Intel AI &nbsp;·&nbsp; Report generated by Gemini AI &nbsp;·&nbsp; Educational tool — not financial or investment advice.</p>
+  <p style="margin-top:.3rem">Data is AI-generated and should be independently verified before relying on for business decisions.</p>
+</footer>
+
+
+<script>
+/* ════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let CITIES = [];
+let currentCityIdx = 0;
+
+/* ════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function goTab(id) {
+  ['setup','overview','cities'].forEach(v => {
+    document.getElementById('view-'+v).classList.toggle('on', v===id);
+    const tab = document.getElementById('tab-'+v);
+    if(tab) tab.classList.toggle('on', v===id);
+  });
+  document.getElementById('view-loading').classList.remove('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ════════════════════════════════════════════
+   SETUP HELPERS
+═══════════════════════════════════════════ */
+function toggleApiVis() {
+  const inp = document.getElementById('apiKey');
+  const btn = inp.nextElementSibling;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? 'Show' : 'Hide';
+}
+
+function updateCityCount() {
+  const lines = document.getElementById('cityInput').value.trim().split('\n').filter(l => l.trim());
+  const badge = document.getElementById('city-count-badge');
+  badge.textContent = `${lines.length} ${lines.length === 1 ? 'city' : 'cities'}`;
+  badge.style.color = lines.length > 15 ? 'var(--red)' : lines.length < 2 ? 'var(--muted)' : 'var(--indigo)';
+}
+
+/* ════════════════════════════════════════════
+   MAIN GENERATION FLOW
+═══════════════════════════════════════════ */
+async function startGeneration() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const cityInput = document.getElementById('cityInput').value.trim();
+  const errorBox = document.getElementById('setup-error');
+
+  errorBox.style.display = 'none';
+
+  if (!apiKey) { showError('Please enter your Gemini API key.'); return; }
+  if (!cityInput) { showError('Please enter at least 2 cities.'); return; }
+
+  const cities = cityInput.split('\n').map(c => c.trim()).filter(Boolean);
+  if (cities.length < 2) { showError('Please enter at least 2 cities (one per line).'); return; }
+  if (cities.length > 15) { showError('Maximum 15 cities per report. Please remove some cities.'); return; }
+
+  document.getElementById('gen-btn').disabled = true;
+
+  // Switch to loading view
+  document.getElementById('view-setup').classList.remove('on');
+  document.getElementById('view-loading').classList.add('on');
+
+  // Build progress list UI
+  buildProgressList(cities);
+
+  try {
+    const data = await generateReport(apiKey, cities);
+    CITIES = data;
+    renderReport();
+  } catch(err) {
+    console.error(err);
+    document.getElementById('view-loading').classList.remove('on');
+    document.getElementById('view-setup').classList.add('on');
+    document.getElementById('gen-btn').disabled = false;
+    showError('Generation failed: ' + err.message + '. Check your API key and try again.');
+  }
+}
+
+function showError(msg) {
+  const e = document.getElementById('setup-error');
+  e.textContent = '⚠ ' + msg;
+  e.style.display = 'block';
+}
+
+function buildProgressList(cities) {
+  const list = document.getElementById('city-progress-list');
+  list.innerHTML = cities.map((c, i) => `
+    <div class="cp-item queued" id="cp-${i}">
+      <div class="cp-icon">⏳</div>
+      <div>
+        <div class="cp-name">${c}</div>
+        <div class="cp-status">Queued</div>
+      </div>
+    </div>`).join('');
+}
+
+function setCityStatus(idx, status) {
+  const el = document.getElementById('cp-'+idx);
+  if (!el) return;
+  el.className = 'cp-item ' + status;
+  const icon = el.querySelector('.cp-icon');
+  const stat = el.querySelector('.cp-status');
+  const icons = {queued:'⏳', active:'⚙', done:'✓', error:'✗'};
+  const labels = {queued:'Queued', active:'Generating...', done:'Complete', error:'Error'};
+  icon.textContent = icons[status] || '⏳';
+  stat.textContent = labels[status] || status;
+}
+
+function updateProgress(done, total) {
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progress-bar').style.width = Math.max(5, pct) + '%';
+  document.getElementById('progress-label').textContent = `${done} of ${total} cities complete`;
+}
+
+/* ════════════════════════════════════════════
+   GEMINI API CALL
+═══════════════════════════════════════════ */
+async function generateReport(apiKey, cities) {
+  const focus = document.getElementById('reportFocus').value.trim() || 'commercial-to-residential rezoning potential';
+  const title = document.getElementById('reportTitle').value.trim() || 'Market Intelligence Report';
+
+  // Build a single comprehensive prompt for all cities
+  const prompt = buildPrompt(cities, focus, title);
+
+  // Mark first city as active
+  cities.forEach((_, i) => setCityStatus(i, i === 0 ? 'active' : 'queued'));
+  updateProgress(0, cities.length);
+
+  // Animate progress while waiting
+  let fakeProgress = 0;
+  const progressInterval = setInterval(() => {
+    fakeProgress = Math.min(fakeProgress + 1, cities.length - 1);
+    const idx = fakeProgress;
+    for(let i=0; i<idx; i++) setCityStatus(i, 'done');
+    setCityStatus(idx, 'active');
+    updateProgress(idx, cities.length);
+  }, 2000);
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.6,
+            maxOutputTokens: 65536
+          }
+        })
+      }
+    );
+
+    clearInterval(progressInterval);
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const msg = errData?.error?.message || `HTTP ${response.status}`;
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) throw new Error('Empty response from Gemini API');
+
+    // Parse JSON — strip markdown fences if present
+    const cleanText = rawText.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+    
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanText);
+    } catch(parseErr) {
+      // Response was truncated — attempt to repair by closing open structures
+      console.warn('JSON truncated, attempting repair...');
+      parsed = repairTruncatedJSON(cleanText);
+    }
+
+    const cityArray = parsed.cities || parsed.report?.cities || parsed;
+    if (!Array.isArray(cityArray)) throw new Error('Unexpected response format from Gemini');
+
+    // Mark all done
+    cities.forEach((_, i) => setCityStatus(i, 'done'));
+    updateProgress(cities.length, cities.length);
+
+    return cityArray;
+
+  } catch(err) {
+    clearInterval(progressInterval);
+    cities.forEach((_, i) => setCityStatus(i, 'error'));
+    throw err;
+  }
+}
+
+/* ════════════════════════════════════════════
+   JSON REPAIR — handles truncated API responses
+═══════════════════════════════════════════ */
+function repairTruncatedJSON(text) {
+  // Find the last complete city object by locating balanced braces
+  // Strategy: truncate at last complete array item and close all open brackets
+  let repaired = text;
+  
+  // Remove any trailing incomplete string (find last complete quote pair in last property)
+  // Cut at the last safely-closed object: find last '}' before the truncation point
+  const lastGoodCity = repaired.lastIndexOf('},');
+  const lastGoodCityAlt = repaired.lastIndexOf('}\n  ]');
+  const lastGoodCityAlt2 = repaired.lastIndexOf('}\n]');
+  
+  const cutPoint = Math.max(lastGoodCity, lastGoodCityAlt, lastGoodCityAlt2);
+  
+  if (cutPoint > 100) {
+    // Truncate after the last good city and close the JSON
+    repaired = repaired.substring(0, cutPoint + 1);
+    // Count open brackets/braces to know what needs closing
+    let openBraces = 0, openBrackets = 0;
+    let inString = false, escape = false;
+    for (const ch of repaired) {
+      if (escape) { escape = false; continue; }
+      if (ch === '\\' && inString) { escape = true; continue; }
+      if (ch === '"') { inString = !inString; continue; }
+      if (inString) continue;
+      if (ch === '{') openBraces++;
+      else if (ch === '}') openBraces--;
+      else if (ch === '[') openBrackets++;
+      else if (ch === ']') openBrackets--;
+    }
+    // Close whatever is still open
+    while (openBrackets > 0) { repaired += ']'; openBrackets--; }
+    while (openBraces > 0) { repaired += '}'; openBraces--; }
+    
+    try {
+      return JSON.parse(repaired);
+    } catch(e) {
+      throw new Error('Response was too large and could not be repaired. Try fewer cities (3-5) or a shorter report focus.');
+    }
+  }
+  
+  throw new Error('Response was truncated and could not be repaired. Try fewer cities (3-5 at a time).');
+}
+
+
+function buildPrompt(cities, focus, title) {
+  const scOptions = '"cg" (green=active/booming), "cb" (blue=stable/growing), "co" (orange=surging/momentum), "cr" (red=emerging/early), "cp" (purple=building/mid)';
+  return `You are a commercial real estate intelligence analyst. Generate a detailed ${focus} intelligence report for these US cities: ${cities.join(', ')}.
+
+For each city, produce thorough, specific, research-based intelligence. Include REAL project names, REAL policy names, REAL dollar figures, and REAL sources where possible. Be specific — not generic.
+
+Return ONLY valid JSON matching this EXACT schema (no markdown, no explanation, just the JSON):
+
+{
+  "cities": [
+    {
+      "name": "Full City Name, ST",
+      "state": "ST",
+      "region": "Northeast|South|Midwest|West|Mid-Atlantic|West Coast|Southwest",
+      "pipeline": "X,XXX (formatted string with units e.g. '5,200' or '12,000+')",
+      "pipeNum": 5200,
+      "vacancy": "XX.X%",
+      "yoy": "+XX% or 'Growing' or 'New Policy' etc.",
+      "statusLabel": "Booming|Active|Surging|Building|Emerging",
+      "sc": ${scOptions},
+      "color": "#hexcolor (pick a distinctive hex color per city)",
+      "catalyst": "2-3 sentence description of the PRIMARY market catalyst driving conversions — be specific with real projects, policies, and figures.",
+      "profile": "2-3 sentences on the building stock profile, typical asset types being converted, and key market characteristics.",
+      "stats": [
+        {"val": "X,XXX", "lbl": "Pipeline Units", "color": "#hexcolor"},
+        {"val": "XX%", "lbl": "Office Vacancy", "color": "#dc2626"},
+        {"val": "$XXM", "lbl": "Notable Incentive Value", "color": "#d97706"},
+        {"val": "XX", "lbl": "Active Projects", "color": "#2563eb"}
+      ],
+      "projects": [
+        {
+          "name": "Specific Building/Project Name",
+          "addr": "Address or Neighborhood, City",
+          "units": "XXX or TBD",
+          "invest": "$XXM or N/A",
+          "program": "Financing/incentive program used",
+          "status": "Under Construction|Completed|Approved|Planned|Groundbroke",
+          "sc": "cg|cb|co|cr|cp"
+        }
+      ],
+      "timeline": [
+        {
+          "date": "Month Year or just Year",
+          "title": "Policy/Project/Milestone Name",
+          "desc": "1-2 sentence description of this event and its significance."
+        }
+      ],
+      "finance": [
+        {
+          "amount": "Dollar value or term (e.g. '20 Years', '$41M', 'By Right')",
+          "label": "Program Name",
+          "desc": "2-3 sentences explaining how this incentive works and its impact.",
+          "color": "#hexcolor"
+        }
+      ],
+      "news": [
+        {
+          "type": "Policy|Deal|Pipeline|Finance|Reform|Market|Milestone|Risk|State Law",
+          "cls": "cg|cb|co|cr|cp|ci",
+          "text": "1-2 sentences of specific, sourced intelligence about this city's market.",
+          "src": "Source Name, Date"
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Include 4-5 projects per city
+- Include 4 timeline events per city  
+- Include 3 finance mechanisms per city
+- Include 5 news items per city
+- Be SPECIFIC with real names, figures, and sources
+- Each city must have a UNIQUE hex color
+- Pipeline numbers should be realistic for each city's size and activity level
+- Cities with less activity should have lower pipeline numbers and "Emerging" status
+- Return ONLY the JSON, no other text, no markdown fences`;
+}
+
+/* ════════════════════════════════════════════
+   RENDER REPORT
+═══════════════════════════════════════════ */
+function renderReport() {
+  const title = document.getElementById('reportTitle').value.trim() || 'Market Intelligence Report';
+
+  // Hero
+  const firstCity = CITIES[0];
+  document.getElementById('hero-title').innerHTML = title.includes('Rezoning') || title.includes('rezone') || title.includes('Rezone')
+    ? title.replace(/(Rezoning|rezone|Rezone)/gi, '<em>$1</em>')
+    : `<em>${title}</em>`;
+  document.getElementById('hero-desc').textContent = `AI-generated intelligence for ${CITIES.length} markets. Powered by Gemini. Verify figures before investment decisions.`;
+
+  // KPI strip
+  const totalPipeline = CITIES.reduce((s,c) => s + (c.pipeNum||0), 0);
+  const avgVacancy = (CITIES.reduce((s,c) => s + parseFloat((c.vacancy||'0').replace('%','')), 0) / CITIES.length).toFixed(1);
+  document.getElementById('kpi-strip').innerHTML = `
+    <div class="kpi"><div class="kpi-n">${CITIES.length}</div><div class="kpi-l">Cities Analyzed</div></div>
+    <div class="kpi"><div class="kpi-n">${(totalPipeline/1000).toFixed(0)}k</div><div class="kpi-l">Total Pipeline Units</div></div>
+    <div class="kpi"><div class="kpi-n">${avgVacancy}%</div><div class="kpi-l">Avg Office Vacancy</div></div>
+    <div class="kpi"><div class="kpi-n">${CITIES.filter(c=>c.statusLabel==='Booming'||c.statusLabel==='Surging').length}</div><div class="kpi-l">High-Activity Markets</div></div>`;
+
+  // Pipeline bars
+  const maxPipe = Math.max(...CITIES.map(c=>c.pipeNum||0));
+  const pipeBars = document.getElementById('pipe-bars');
+  pipeBars.innerHTML = CITIES.sort((a,b)=>(b.pipeNum||0)-(a.pipeNum||0)).map(c=>`
+    <div class="pipe-row">
+      <div class="pipe-city">${c.name.split(',')[0]}</div>
+      <div class="pipe-bg"><div class="pipe-fill" style="width:${maxPipe>0?((c.pipeNum||0)/maxPipe*100).toFixed(1):0}%;background:${c.color||'#6366f1'}"></div></div>
+      <div class="pipe-val">${(c.pipeNum||0).toLocaleString()}</div>
+    </div>`).join('');
+
+  // Scorecard
+  document.getElementById('scorecard-body').innerHTML = CITIES.map(c=>`
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.vacancy||'N/A'}</td>
+      <td class="tg">${c.pipeline||'N/A'}</td>
+      <td class="${c.yoy&&c.yoy.startsWith('+')?'tg':'to'}">${c.yoy||'N/A'}</td>
+      <td><span class="chip ${c.sc||'ci'}">${c.statusLabel||'N/A'}</span></td>
+    </tr>`).join('');
+
+  // City nav
+  document.getElementById('city-nav-list').innerHTML = CITIES.map((c,i)=>`
+    <div class="cni${i===0?' on':''}" onclick="loadCity(${i})">
+      <div>
+        <div class="cni-rank">Rank #${i+1} · ${c.region||c.state}</div>
+        <div class="cni-name">${c.name.split(',')[0]}</div>
+      </div>
+    </div>`).join('');
+
+  // Enable tabs
+  ['overview','cities'].forEach(t => {
+    const tab = document.getElementById('tab-'+t);
+    if(tab) tab.classList.remove('disabled');
+  });
+  document.getElementById('nav-live').style.display = 'flex';
+
+  // Load first city
+  loadCity(0);
+
+  // Switch to overview
+  setTimeout(() => {
+    document.getElementById('view-loading').classList.remove('on');
+    goTab('overview');
+  }, 800);
+}
+
+/* ════════════════════════════════════════════
+   LOAD CITY DETAIL
+═══════════════════════════════════════════ */
+function loadCity(idx) {
+  document.querySelectorAll('.cni').forEach((el,i) => el.classList.toggle('on', i===idx));
+  currentCityIdx = idx;
+  const c = CITIES[idx];
+  if (!c) return;
+
+  const statsHTML = (c.stats||[]).map(s=>`
+    <div class="stat-tile">
+      <div class="stat-tile-val" style="color:${s.color||c.color||'#4f46e5'}">${s.val||'N/A'}</div>
+      <div class="stat-tile-lbl">${s.lbl||''}</div>
+    </div>`).join('');
+
+  const projRows = (c.projects||[]).map(p=>`
+    <tr>
+      <td><div class="proj-name">${p.name||''}</div><div class="proj-addr">${p.addr||''}</div></td>
+      <td>${p.units||'N/A'}</td>
+      <td>${p.invest||'N/A'}</td>
+      <td style="font-size:.77rem">${p.program||''}</td>
+      <td><span class="chip ${p.sc||'ci'}">${p.status||''}</span></td>
+    </tr>`).join('');
+
+  const tlHTML = (c.timeline||[]).map(t=>`
+    <div class="tl-item">
+      <div class="tl-date">${t.date||''}</div>
+      <div class="tl-dot"></div>
+      <div>
+        <div class="tl-title">${t.title||''}</div>
+        <div class="tl-desc">${t.desc||''}</div>
+      </div>
+    </div>`).join('');
+
+  const finHTML = (c.finance||[]).map(f=>`
+    <div class="fin-card" style="border-top-color:${f.color||c.color||'#4f46e5'}">
+      <div class="fin-amount" style="color:${f.color||c.color||'#4f46e5'}">${f.amount||''}</div>
+      <div class="fin-label">${f.label||''}</div>
+      <div class="fin-desc">${f.desc||''}</div>
+    </div>`).join('');
+
+  const newsHTML = (c.news||[]).map(n=>`
+    <div class="news-item">
+      <span class="news-type ${n.cls||'ci'}">${n.type||''}</span>
+      <div>
+        <div class="news-body">${n.text||''}</div>
+        <div class="news-src">${n.src||''}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('city-panel').innerHTML = `
+
+    <div class="city-header">
+      <div class="ch-top">
+        <div>
+          <div class="ch-rank-tag">Rank #${idx+1} of ${CITIES.length} &nbsp;·&nbsp; ${c.state||''} &nbsp;·&nbsp; ${c.region||''}</div>
+          <div class="ch-name">${c.name||''}</div>
+          <div style="margin-top:.6rem">
+            <span class="chip ${c.sc||'ci'}">${c.statusLabel||''}</span>&nbsp;
+            <span class="chip ci">${c.yoy||''} YoY</span>&nbsp;
+            <span class="chip" style="background:#f1f5f9;color:var(--muted);border:1px solid var(--border)">${c.vacancy||''} vacancy</span>
+          </div>
+        </div>
+        <div class="ch-kpis">
+          <div class="ch-kpi">
+            <div class="ch-kpi-val" style="color:var(--blue)">${c.pipeline||'N/A'}</div>
+            <div class="ch-kpi-lbl">Pipeline Units</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:.8rem">Key Statistics</div>
+      <div class="stat-strip">${statsHTML}</div>
+    </div>
+
+    <div class="card">
+      <div class="info-2">
+        <div class="ibox">
+          <div class="ibox-lbl"><div class="ibox-dot" style="background:var(--green)"></div>Primary Catalyst</div>
+          <div class="ibox-text">${c.catalyst||'No data available.'}</div>
+        </div>
+        <div class="ibox">
+          <div class="ibox-lbl"><div class="ibox-dot" style="background:var(--blue)"></div>Building Stock Profile</div>
+          <div class="ibox-text">${c.profile||'No data available.'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="eyebrow">Active & Pipeline Projects</div>
+        <span class="chip ci">${(c.projects||[]).length} projects</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="proj-table">
+          <thead><tr><th>Project Name & Address</th><th>Units</th><th>Investment</th><th>Program / Financing</th><th>Status</th></tr></thead>
+          <tbody>${projRows||'<tr><td colspan="5" style="color:var(--muted);padding:1rem">No project data available.</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <div class="eyebrow" style="margin-bottom:.8rem">Policy Timeline</div>
+        <div class="card-title" style="margin-bottom:1rem">Key Legislative & Regulatory Events</div>
+        <div class="timeline">${tlHTML||'<div style="color:var(--muted);font-size:.82rem">No timeline data available.</div>'}</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow" style="margin-bottom:.8rem">Financial Mechanisms</div>
+        <div class="card-title" style="margin-bottom:1rem">Incentives & Financing Programs</div>
+        <div class="fin-grid">${finHTML||''}</div>
+        <div style="margin-top:1.2rem;padding:.85rem 1rem;background:#f8fafc;border:1px solid var(--border);border-radius:8px;font-size:.77rem;color:var(--muted);line-height:1.65">
+          <strong style="color:var(--text2)">Cost context:</strong> National avg. conversion cost is ~$685/sq.ft vs. new-build ~$588/sq.ft (Morgan Stanley). The ~$97/sq.ft gap typically requires municipal subsidies or tax abatements for institutional capital to pencil out.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:.8rem">AI-Generated Intelligence</div>
+      <div class="card-title" style="margin-bottom:1rem">News, Policy & Deal Events</div>
+      <div class="news-list">${newsHTML||'<div style="color:var(--muted);font-size:.82rem">No intelligence items available.</div>'}</div>
+      <div class="note-box" style="margin-top:1rem">⚡ Content generated by Gemini AI. Sources listed are suggested reference points — verify independently for accuracy and recency.</div>
+    </div>
+  `;
+}
+
+/* ════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+updateCityCount();
+</script>
+</body>
+</html>

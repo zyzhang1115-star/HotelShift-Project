@@ -923,7 +923,7 @@
                 <canvas id="distributionChart" height="80"></canvas>
             </div>
             
-            <h2>Top 10 MSAs Ranking</h2>
+            <h2>Top 20 MSAs Ranking</h2>
             <div class="table-container">
                 <table id="rankingTable" class="ranking-table">
                     <thead>
@@ -1032,28 +1032,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
-            
-            <div class="dimensions-legend" style="margin-top: 40px;">
-                <h3 style="grid-column: 1/-1; color: #FFD700; margin-bottom: 20px;">6 Investment Dimensions</h3>
-                <div class="dimension">
-                    <span class="dim-label">📈 Economic Index:</span> Employment Rate, Employment Growth, Population Growth & Income Growth
-                </div>
-                <div class="dimension">
-                    <span class="dim-label">🛡️ Stability Index:</span> Rent-to-Income Ratio & Vacancy Rate
-                </div>
-                <div class="dimension">
-                    <span class="dim-label">📦 Supply Index:</span> New Multifamily Unit Supply
-                </div>
-                <div class="dimension">
-                    <span class="dim-label">💰 Pricing Index:</span> Rent Growth
-                </div>
-                <div class="dimension">
-                    <span class="dim-label">📊 Valuation Index:</span> Implied Property Value (Annual Rent, OER & Cap Rate)
-                </div>
-                <div class="dimension">
-                    <span class="dim-label">🏦 Capital Index:</span> Cap Rate Spread & Effective Tax Spread
                 </div>
             </div>
             
@@ -1181,7 +1159,7 @@
         <!-- Raw Data Section -->
         <section id="rawdataView" class="view-section">
             <h2>Raw Data: All Factors & Metrics</h2>
-            <p class="section-subtitle">Complete dataset showing all 13 investment factors collected from Census API and market analysis</p>
+            <p class="section-subtitle">Complete dataset showing MSA raw data (population, housing, employment, etc.) and 11 investment factors organized by 6 key dimensions</p>
             
             <div class="rawdata-controls">
                 <input type="text" id="rawDataSearch" placeholder="Search by MSA name..." style="padding: 10px; width: 300px; border: 1px solid #ccc; border-radius: 6px;">
@@ -1196,33 +1174,49 @@
 
             <div class="factor-legend">
                 <div class="legend-group">
-                    <h4>📊 Demographic Factors</h4>
+                    <h4>💼 Economic Factors</h4>
                     <ul>
-                        <li><strong>Total Population</strong> - MSA resident count</li>
+                        <li><strong>Employment Rate</strong> - Employed / Labor Force (%)</li>
+                        <li><strong>Employment Growth</strong> - Year-over-year employment change (%)</li>
                         <li><strong>Pop Growth</strong> - Year-over-year population change (%)</li>
-                        <li><strong>Employment Rate</strong> - % of labor force employed</li>
-                        <li><strong>Median Household Income</strong> - Average annual income ($)</li>
                         <li><strong>Income Growth</strong> - Year-over-year income change (%)</li>
                     </ul>
                 </div>
                 
                 <div class="legend-group">
-                    <h4>🏠 Real Estate Factors</h4>
+                    <h4>🏠 Housing Stability Factors</h4>
                     <ul>
-                        <li><strong>Median Gross Rent</strong> - Average monthly rent ($)</li>
-                        <li><strong>Median House Value</strong> - Average property value ($)</li>
-                        <li><strong>Rent to Income Ratio</strong> - Monthly rent / monthly income (%)</li>
-                        <li><strong>Vacancy Rate</strong> - Empty units as % of total</li>
-                        <li><strong>Implied Value</strong> - Annual Rent × (1 - OER) / Cap Rate</li>
+                        <li><strong>Rent/Income</strong> - Monthly rent / monthly income (%)</li>
+                        <li><strong>Vacancy Rate</strong> - Vacant units / total housing units (%)</li>
                     </ul>
                 </div>
                 
                 <div class="legend-group">
-                    <h4>💼 Investment Metrics</h4>
+                    <h4>🏗️ Supply Factors</h4>
                     <ul>
-                        <li><strong>Cap Spread</strong> - Hotel Cap Rate - Multifamily Cap Rate (%)</li>
-                        <li><strong>Tax Differential</strong> - Hotel tax rate - Multifamily tax rate (%)</li>
-                        <li><strong>HERS Index Score</strong> - Energy efficiency (lower = more efficient)</li>
+                        <li><strong>New Multi-Units</strong> - Year-over-year increase in multi-family units</li>
+                    </ul>
+                </div>
+                
+                <div class="legend-group">
+                    <h4>📈 Pricing Power Factors</h4>
+                    <ul>
+                        <li><strong>Rent Growth</strong> - Year-over-year rent change (%)</li>
+                    </ul>
+                </div>
+                
+                <div class="legend-group">
+                    <h4>💰 Valuation Factors</h4>
+                    <ul>
+                        <li><strong>Implied Value</strong> - (Annual Rent × (1 - OPEX%)) / Cap Rate ($)</li>
+                    </ul>
+                </div>
+                
+                <div class="legend-group">
+                    <h4>🏛️ Capital Market Factors</h4>
+                    <ul>
+                        <li><strong>Effective Tax Spread</strong> - Hotel tax rate - Multifamily tax rate (%)</li>
+                        <li><strong>Value Creation</strong> - (1/Multifamily Cap - 1/Hotel Cap) × $1M ($)</li>
                     </ul>
                 </div>
             </div>
@@ -1547,24 +1541,31 @@
         }
 
         function calculateScores() {
+            // Calculate weighted z-scores for all MSAs
+            // Each Index is already z-score normalized (range: -3 to 3)
+            // Weighted average of z-scores will also be in -3 to 3 range
             allMSAs.forEach(msa => {
-                msa.customScore = (
+                const weighted_z_score = (
                     (msa.Economic_Index || 0) * currentWeights.economic +
                     (msa.Stability_Index || 0) * currentWeights.stability +
                     (msa.Supply_Index || 0) * currentWeights.supply +
                     (msa.Pricing_Index || 0) * currentWeights.pricing +
                     (msa.Valuation_Index || 0) * currentWeights.valuation +
                     (msa.Capital_Index || 0) * currentWeights.capital
-                ) * 100;
+                );
+                
+                // Linear transformation: z-score (-3 to 3) → score (0 to 100)
+                // weighted_z_score = -3 → score = 0
+                // weighted_z_score = 0  → score = 50
+                // weighted_z_score = 3  → score = 100
+                msa.customScore = ((weighted_z_score + 3) / 6) * 100;
             });
         }
 
         function renderScoringTable() {
             const tbody = document.getElementById('scoringTableBody');
             tbody.innerHTML = '';
-            
-            const sorted = [...allMSAs].sort((a, b) => (b.customScore || 0) - (a.customScore || 0));
-            
+
             const isDefaultWeights = 
                 Math.abs(currentWeights.economic - 0.25) < 0.01 &&
                 Math.abs(currentWeights.stability - 0.15) < 0.01 &&
@@ -1572,16 +1573,23 @@
                 Math.abs(currentWeights.pricing - 0.15) < 0.01 &&
                 Math.abs(currentWeights.valuation - 0.20) < 0.01 &&
                 Math.abs(currentWeights.capital - 0.10) < 0.01;
+
+            const sorted = [...allMSAs].sort((a, b) => {
+                const scoreA = isDefaultWeights ? (a.Investment_Score || 0) : (a.customScore || 0);
+                const scoreB = isDefaultWeights ? (b.Investment_Score || 0) : (b.customScore || 0);
+                return scoreB - scoreA;
+            });
             
             sorted.slice(0, 10).forEach((msa, index) => {
-                const scoreChange = isDefaultWeights ? 0 : ((msa.customScore || 0) - (msa.Investment_Score || 0)).toFixed(1);
+                const displayScore = isDefaultWeights ? (msa.Investment_Score || 0) : (msa.customScore || 0);
+                const scoreChange = isDefaultWeights ? 0 : (displayScore - (msa.Investment_Score || 0)).toFixed(1);
                 const changeColor = scoreChange > 0 ? '#4caf50' : scoreChange < 0 ? '#f44336' : '#999';
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td><strong>${msa.msa_name}</strong></td>
-                    <td><strong style="color: #667eea;">${(msa.customScore || 0).toFixed(2)}</strong></td>
+                    <td><strong style="color: #667eea;">${displayScore.toFixed(2)}</strong></td>
                     <td style="color: ${changeColor}; font-weight: bold;">${scoreChange > 0 ? '+' : ''}${scoreChange}</td>
                 `;
                 tbody.appendChild(row);
@@ -1598,7 +1606,50 @@
         }
 
         function renderRawDataTable() {
-            const sorted = [...allMSAs].sort((a, b) => (b.Investment_Score || 0) - (a.Investment_Score || 0));
+            // Get search and sort parameters
+            const searchQuery = document.getElementById('rawDataSearch').value.trim().toLowerCase();
+            const sortBy = document.getElementById('rawDataSort').value;
+
+            // Use the same sorting as Index Scoring page (considering custom weights)
+            const isDefaultWeights = 
+                Math.abs(currentWeights.economic - 0.25) < 0.01 &&
+                Math.abs(currentWeights.stability - 0.15) < 0.01 &&
+                Math.abs(currentWeights.supply - 0.15) < 0.01 &&
+                Math.abs(currentWeights.pricing - 0.15) < 0.01 &&
+                Math.abs(currentWeights.valuation - 0.20) < 0.01 &&
+                Math.abs(currentWeights.capital - 0.10) < 0.01;
+
+            let filteredMSAs = [...allMSAs];
+
+            // Apply search filter
+            if (searchQuery) {
+                filteredMSAs = filteredMSAs.filter(msa =>
+                    msa.msa_name.toLowerCase().includes(searchQuery) ||
+                    msa.msa_code.toString().includes(searchQuery)
+                );
+            }
+
+            // Apply sorting
+            let sorted;
+            switch (sortBy) {
+                case 'population':
+                    sorted = filteredMSAs.sort((a, b) => (b.Total_Population || 0) - (a.Total_Population || 0));
+                    break;
+                case 'growth':
+                    sorted = filteredMSAs.sort((a, b) => (b.Pop_Growth || 0) - (a.Pop_Growth || 0));
+                    break;
+                case 'income':
+                    sorted = filteredMSAs.sort((a, b) => (b.Median_Income || 0) - (a.Median_Income || 0));
+                    break;
+                case 'score':
+                default:
+                    sorted = filteredMSAs.sort((a, b) => {
+                        const scoreA = isDefaultWeights ? (a.Investment_Score || 0) : (a.customScore || 0);
+                        const scoreB = isDefaultWeights ? (b.Investment_Score || 0) : (b.customScore || 0);
+                        return scoreB - scoreA;
+                    });
+                    break;
+            }
             
             const headerRow = document.getElementById('rawDataHeader');
             headerRow.innerHTML = `
@@ -1610,13 +1661,15 @@
                     <th>Median Income</th>
                     <th>Income Growth %</th>
                     <th>Employment Rate %</th>
+                    <th>Employment Growth %</th>
                     <th>Median Rent</th>
+                    <th>Rent Growth %</th>
                     <th>Rent/Income %</th>
-                    <th>Home Value</th>
                     <th>Vacancy Rate %</th>
-                    <th>Cap Spread %</th>
-                    <th>Tax Diff %</th>
-                    <th>HERS Score</th>
+                    <th>New Multi-Units</th>
+                    <th>Implied Value</th>
+                    <th>Effective Tax Spread %</th>
+                    <th>Value Creation</th>
                     <th>Investment Score</th>
                 </tr>
             `;
@@ -1634,13 +1687,15 @@
                     <td>$${formatNumber(Math.round(msa.Median_Income || 0))}</td>
                     <td>${((msa.Income_Growth || 0) * 100).toFixed(2)}</td>
                     <td>${((msa.Employment_Rate || 0) * 100).toFixed(1)}</td>
+                    <td>${((msa.Employment_Growth || 0) * 100).toFixed(2)}</td>
                     <td>$${formatNumber(Math.round(msa.Median_Rent || 0))}</td>
+                    <td>${((msa.Rent_Growth || 0) * 100).toFixed(2)}</td>
                     <td>${((msa.Rent_to_Income_Ratio || 0) * 100).toFixed(1)}</td>
-                    <td>$${formatNumber(Math.round(msa.Median_Home_Value || 0))}</td>
                     <td>${((msa.Vacancy_Rate || 0) * 100).toFixed(1)}</td>
-                    <td>${(msa['Cap Spread'] || 0).toFixed(2)}</td>
-                    <td>${(msa.Diff_Effective_Rate || 0).toFixed(2)}</td>
-                    <td>${Math.round(msa['Average HERS Index Score'] || 0)}</td>
+                    <td>${formatNumber(Math.round(msa.New_Multi_Units || 0))}</td>
+                    <td>$${formatNumber(Math.round(msa.Implied_Value || 0))}</td>
+                    <td>${((msa['Effective Tax Spread'] || 0) * 100).toFixed(2)}</td>
+                    <td>$${formatNumber(Math.round(msa['Value Creation'] || 0))}</td>
                     <td><strong style="color: #667eea;">${(msa.Investment_Score || 0).toFixed(2)}</strong></td>
                 `;
                 tbody.appendChild(row);
@@ -1648,12 +1703,55 @@
         }
 
         function downloadRawData() {
-            const sorted = [...allMSAs].sort((a, b) => (b.Investment_Score || 0) - (a.Investment_Score || 0));
+            // Get search and sort parameters
+            const searchQuery = document.getElementById('rawDataSearch').value.trim().toLowerCase();
+            const sortBy = document.getElementById('rawDataSort').value;
+
+            // Use the same sorting as Index Scoring page (considering custom weights)
+            const isDefaultWeights = 
+                Math.abs(currentWeights.economic - 0.25) < 0.01 &&
+                Math.abs(currentWeights.stability - 0.15) < 0.01 &&
+                Math.abs(currentWeights.supply - 0.15) < 0.01 &&
+                Math.abs(currentWeights.pricing - 0.15) < 0.01 &&
+                Math.abs(currentWeights.valuation - 0.20) < 0.01 &&
+                Math.abs(currentWeights.capital - 0.10) < 0.01;
+
+            let filteredMSAs = [...allMSAs];
+
+            // Apply search filter
+            if (searchQuery) {
+                filteredMSAs = filteredMSAs.filter(msa =>
+                    msa.msa_name.toLowerCase().includes(searchQuery) ||
+                    msa.msa_code.toString().includes(searchQuery)
+                );
+            }
+
+            // Apply sorting
+            let sorted;
+            switch (sortBy) {
+                case 'population':
+                    sorted = filteredMSAs.sort((a, b) => (b.Total_Population || 0) - (a.Total_Population || 0));
+                    break;
+                case 'growth':
+                    sorted = filteredMSAs.sort((a, b) => (b.Pop_Growth || 0) - (a.Pop_Growth || 0));
+                    break;
+                case 'income':
+                    sorted = filteredMSAs.sort((a, b) => (b.Median_Income || 0) - (a.Median_Income || 0));
+                    break;
+                case 'score':
+                default:
+                    sorted = filteredMSAs.sort((a, b) => {
+                        const scoreA = isDefaultWeights ? (a.Investment_Score || 0) : (a.customScore || 0);
+                        const scoreB = isDefaultWeights ? (b.Investment_Score || 0) : (b.customScore || 0);
+                        return scoreB - scoreA;
+                    });
+                    break;
+            }
             
-            let csv = 'Rank,MSA Name,Population,Pop Growth %,Median Income,Income Growth %,Employment Rate %,Median Rent,Rent/Income %,Home Value,Vacancy Rate %,Cap Spread %,Tax Diff %,HERS Score,Investment Score\n';
+            let csv = 'Rank,MSA Name,Population,Pop Growth %,Median Income,Income Growth %,Employment Rate %,Employment Growth %,Median Rent,Rent Growth %,Rent/Income %,Vacancy Rate %,New Multi-Units,Implied Value,Effective Tax Spread %,Value Creation,Investment Score\n';
             
             sorted.forEach((msa, index) => {
-                csv += `${index + 1},"${msa.msa_name}",${msa.Total_Population},${((msa.Pop_Growth || 0) * 100).toFixed(2)},${msa.Median_Income},${((msa.Income_Growth || 0) * 100).toFixed(2)},${((msa.Employment_Rate || 0) * 100).toFixed(1)},${msa.Median_Rent},${((msa.Rent_to_Income_Ratio || 0) * 100).toFixed(1)},${msa.Median_Home_Value},${((msa.Vacancy_Rate || 0) * 100).toFixed(1)},${(msa['Cap Spread'] || 0).toFixed(2)},${(msa.Diff_Effective_Rate || 0).toFixed(2)},${Math.round(msa['Average HERS Index Score'] || 0)},${(msa.Investment_Score || 0).toFixed(2)}\n`;
+                csv += `${index + 1},"${msa.msa_name}",${msa.Total_Population},${((msa.Pop_Growth || 0) * 100).toFixed(2)},${msa.Median_Income},${((msa.Income_Growth || 0) * 100).toFixed(2)},${((msa.Employment_Rate || 0) * 100).toFixed(1)},${((msa.Employment_Growth || 0) * 100).toFixed(2)},${msa.Median_Rent},${((msa.Rent_Growth || 0) * 100).toFixed(2)},${((msa.Rent_to_Income_Ratio || 0) * 100).toFixed(1)},${((msa.Vacancy_Rate || 0) * 100).toFixed(1)},${Math.round(msa.New_Multi_Units || 0)},${Math.round(msa.Implied_Value || 0)},${((msa['Effective Tax Spread'] || 0) * 100).toFixed(2)},${Math.round(msa['Value Creation'] || 0)},${(msa.Investment_Score || 0).toFixed(2)}\n`;
             });
             
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -1670,6 +1768,14 @@
         function updateRawData() {
             renderRawDataTable();
         }
+
+        // Add event listener for search input
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('rawDataSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', updateRawData);
+            }
+        });
 
         // ========================================
         // Comparison / 6D Analysis View
